@@ -212,14 +212,49 @@ Version 1.2.5 introduces significant reliability improvements for Claude models.
    }
    ```
 
-2. **Restart OpenCode** to load the new version:
+2. **Update model names to new thinking budget format** (REQUIRED for thinking models):
+
+   The old generic `-thinking` suffix is now replaced with explicit budget tiers:
+
+   | Old Model ID (deprecated) | New Model ID | Thinking Budget |
+   |---------------------------|--------------|-----------------|
+   | `claude-sonnet-4-5-thinking` | `claude-sonnet-4-5-thinking-low` | 8,192 tokens |
+   | `claude-sonnet-4-5-thinking` | `claude-sonnet-4-5-thinking-medium` | 16,384 tokens |
+   | `claude-sonnet-4-5-thinking` | `claude-sonnet-4-5-thinking-high` | 32,768 tokens |
+   | `claude-opus-4-5-thinking` | `claude-opus-4-5-thinking-low` | 8,192 tokens |
+   | `claude-opus-4-5-thinking` | `claude-opus-4-5-thinking-medium` | 16,384 tokens |
+   | `claude-opus-4-5-thinking` | `claude-opus-4-5-thinking-high` | 32,768 tokens |
+
+   Update your `~/.config/opencode/opencode.json`:
+
+   ```diff
+   {
+     "provider": {
+       "google": {
+         "models": {
+   -       "claude-sonnet-4-5-thinking": {
+   -         "name": "Claude Sonnet 4.5 Thinking (Antigravity)",
+   +       "claude-sonnet-4-5-thinking-medium": {
+   +         "name": "Claude Sonnet 4.5 Thinking Medium (Antigravity)",
+             "limit": { "context": 200000, "output": 64000 },
+             "modalities": { "input": ["text", "image", "pdf"], "output": ["text"] }
+           }
+         }
+       }
+     }
+   }
+   ```
+
+   > **Tip:** Use `-medium` as a balanced default. Use `-high` for complex reasoning tasks, `-low` for faster responses.
+
+3. **Restart OpenCode** to load the new version:
 
    ```bash
    # If OpenCode is running, exit and restart
    opencode
    ```
 
-3. **(Optional) Review new config options** in `~/.config/opencode/antigravity.json`:
+4. **(Optional) Review new config options** in `~/.config/opencode/antigravity.json`:
 
    ```json
    {
