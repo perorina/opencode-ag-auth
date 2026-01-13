@@ -264,7 +264,7 @@ export const AntigravityConfigSchema = z.object({
    switch_on_first_rate_limit: z.boolean().default(true),
    
    // =========================================================================
-   // Health Score (for hybrid strategy)
+   // Health Score (used by hybrid and priority-queue strategies)
    // =========================================================================
    
    health_score: z.object({
