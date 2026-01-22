@@ -365,20 +365,14 @@ export class AccountManager {
 
   /**
    * Check if we should show an account switch toast.
-   * Debounces ALL account toasts (not just same account) to prevent toast spam
-   * when hybrid mode is recalculating frequently.
+   * Debounces repeated toasts for the same account.
    */
   shouldShowAccountToast(accountIndex: number, debounceMs = 30000): boolean {
     const now = nowMs();
-    // Debounce ANY toast, not just same account - prevents spam on rapid switching
-    if (now - this.lastToastTime < debounceMs) {
-      return false;
+    if (accountIndex !== this.lastToastAccountIndex) {
+      return true;
     }
-    // Also skip if same account (no actual switch)
-    if (accountIndex === this.lastToastAccountIndex) {
-      return false;
-    }
-    return true;
+    return now - this.lastToastTime >= debounceMs;
   }
 
   markToastShown(accountIndex: number): void {
@@ -426,7 +420,7 @@ export class AccountManager {
       if (selectedIndex !== null) {
         const selected = this.accounts[selectedIndex];
         if (selected) {
-          // Note: lastUsed is now updated after successful request via markAccountUsed()
+          selected.lastUsed = nowMs();
           this.markTouchedForQuota(selected, quotaKey);
           this.currentAccountIndexByFamily[family] = selected.index;
           return selected;
@@ -449,7 +443,6 @@ export class AccountManager {
       clearExpiredRateLimits(current);
       const isLimitedForRequestedStyle = isRateLimitedForHeaderStyle(current, family, headerStyle, model);
       if (!isLimitedForRequestedStyle && !this.isAccountCoolingDown(current)) {
-        // Note: lastUsed is now updated after successful request via markAccountUsed()
         this.markTouchedForQuota(current, quotaKey);
         return current;
       }
