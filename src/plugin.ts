@@ -1154,6 +1154,9 @@ export const createAntigravityPlugin = (providerId: string) => async (
             let headerStyle = getHeaderStyleFromUrl(urlString, family);
             const explicitQuota = isExplicitQuotaFromUrl(urlString);
             pushDebug(`headerStyle=${headerStyle} explicit=${explicitQuota}`);
+            if (account.fingerprint) {
+              pushDebug(`fingerprint: quotaUser=${account.fingerprint.quotaUser} deviceId=${account.fingerprint.deviceId.slice(0, 8)}...`);
+            }
             
             // Check if this header style is rate-limited for this account
             if (accountManager.isRateLimitedForHeaderStyle(account, family, headerStyle, model)) {
