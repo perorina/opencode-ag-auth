@@ -50,16 +50,16 @@ export function parseRateLimitReason(
   if (message) {
     const lower = message.toLowerCase();
     
+    // Capacity / Overloaded (Transient) - Check FIRST before "exhausted"
+    if (lower.includes("capacity") || lower.includes("overloaded") || lower.includes("resource exhausted")) {
+      return "MODEL_CAPACITY_EXHAUSTED";
+    }
+
     // RPM / TPM (Short Wait)
     // "per minute", "rate limit", "too many requests"
     // "presque" (French: almost) - retained for i18n parity with Rust reference
     if (lower.includes("per minute") || lower.includes("rate limit") || lower.includes("too many requests") || lower.includes("presque")) {
       return "RATE_LIMIT_EXCEEDED";
-    }
-
-    // Capacity / Overloaded (Transient)
-    if (lower.includes("capacity") || lower.includes("overloaded") || lower.includes("resource exhausted")) {
-      return "MODEL_CAPACITY_EXHAUSTED";
     }
 
     // Quota (Long Wait)
