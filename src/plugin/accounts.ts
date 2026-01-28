@@ -1026,6 +1026,7 @@ export class AccountManager {
     if (available.length > 0) return 0;
     
     // All accounts are over threshold - find earliest reset time
+    // Note: family is "claude"|"gemini" and can't distinguish pro/flash. Default to gemini-pro when model is null.
     const quotaGroup: QuotaGroup = model ? getModelFamily(model) : (family === "claude" ? "claude" : "gemini-pro");
     const now = nowMs();
     const waitTimes: number[] = [];
@@ -1041,6 +1042,8 @@ export class AccountManager {
     }
     
     if (waitTimes.length === 0) return null;
-    return Math.min(...waitTimes);
+    const minWait = Math.min(...waitTimes);
+    // Treat 0 as stale cache (resetTime in the past) → fail-open to avoid spin loop
+    return minWait === 0 ? null : minWait;
   }
 }

@@ -72,8 +72,9 @@ const rateLimitToastCooldowns = new Map<string, number>();
 const RATE_LIMIT_TOAST_COOLDOWN_MS = 5000;
 const MAX_TOAST_COOLDOWN_ENTRIES = 100;
 
-// Track if "all accounts rate-limited" toast was shown to prevent spam in while loop
-let allAccountsRateLimitedToastShown = false;
+// Track if "all accounts blocked" toasts were shown to prevent spam in while loop
+let softQuotaToastShown = false;
+let rateLimitToastShown = false;
 
 function cleanupToastCooldowns(): void {
   if (rateLimitToastCooldowns.size > MAX_TOAST_COOLDOWN_ENTRIES) {
@@ -98,8 +99,9 @@ function shouldShowRateLimitToast(message: string): boolean {
   return true;
 }
 
-function resetAllAccountsRateLimitedToast(): void {
-  allAccountsRateLimitedToastShown = false;
+function resetAllAccountsBlockedToasts(): void {
+  softQuotaToastShown = false;
+  rateLimitToastShown = false;
 }
 
 const quotaRefreshInProgressByEmail = new Set<string>();
@@ -1114,9 +1116,9 @@ export const createAntigravityPlugin = (providerId: string) => async (
                 const waitSecValue = Math.max(1, Math.ceil(softQuotaWaitMs / 1000));
                 pushDebug(`all-over-soft-quota family=${family} accounts=${accountCount} waitMs=${softQuotaWaitMs}`);
                 
-                if (!allAccountsRateLimitedToastShown) {
+                if (!softQuotaToastShown) {
                   await showToast(`All ${accountCount} account(s) over ${threshold}% quota. Waiting ${formatWaitTime(softQuotaWaitMs)}...`, "warning");
-                  allAccountsRateLimitedToastShown = true;
+                  softQuotaToastShown = true;
                 }
                 
                 await sleep(softQuotaWaitMs, abortSignal);
@@ -1162,9 +1164,9 @@ export const createAntigravityPlugin = (providerId: string) => async (
                 );
               }
 
-              if (!allAccountsRateLimitedToastShown) {
+              if (!rateLimitToastShown) {
                 await showToast(`All ${accountCount} account(s) rate-limited for ${family}. Waiting ${waitSecValue}s...`, "warning");
-                allAccountsRateLimitedToastShown = true;
+                rateLimitToastShown = true;
               }
 
               // Wait for the rate-limit cooldown to expire, then retry
@@ -1173,7 +1175,7 @@ export const createAntigravityPlugin = (providerId: string) => async (
             }
 
             // Account is available - reset the toast flag
-            resetAllAccountsRateLimitedToast();
+            resetAllAccountsBlockedToasts();
 
             pushDebug(
               `selected idx=${account.index} email=${account.email ?? ""} family=${family} accounts=${accountCount} strategy=${config.account_selection_strategy}`,

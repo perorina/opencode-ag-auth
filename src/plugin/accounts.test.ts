@@ -1777,7 +1777,7 @@ describe("AccountManager", () => {
       vi.useRealTimers();
     });
 
-    it("returns 0 wait time when resetTime is in the past", () => {
+    it("returns null (fail-open) when resetTime is in the past", () => {
       vi.useFakeTimers();
       vi.setSystemTime(new Date("2026-01-28T16:00:00Z"));
 
@@ -1799,7 +1799,7 @@ describe("AccountManager", () => {
       });
 
       const waitMs = manager.getMinWaitTimeForSoftQuota("claude", 90, 10 * 60 * 1000);
-      expect(waitMs).toBe(0);
+      expect(waitMs).toBe(null);
 
       vi.useRealTimers();
     });
