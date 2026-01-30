@@ -107,11 +107,16 @@ jobs:
             try {
               parsed = JSON.parse(rawOutput.trim());
             } catch (e) {
-              const match = rawOutput.match(/```(?:json)?\s*([\s\S]*?)\s*```/) || 
-                           rawOutput.match(/\{[\s\S]*?\}/);
-              if (match) {
+              // Try to extract JSON from code blocks first, then raw JSON
+              const codeBlockMatch = rawOutput.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+              // Use greedy match to capture full nested JSON object
+              const rawJsonMatch = rawOutput.match(/\{[\s\S]*\}/);
+              
+              const jsonStr = codeBlockMatch?.[1] || rawJsonMatch?.[0];
+              
+              if (jsonStr) {
                 try {
-                  parsed = JSON.parse(match[1] || match[0]);
+                  parsed = JSON.parse(jsonStr.trim());
                 } catch (e2) {
                   core.setFailed(`Failed to parse output: ${rawOutput}`);
                   return;
