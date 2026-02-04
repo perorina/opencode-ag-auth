@@ -7,6 +7,10 @@
 
 import type { ResolvedModel, ThinkingTier, GoogleSearchConfig } from "./types";
 
+export interface ModelResolverOptions {
+  cli_first?: boolean;
+}
+
 /**
  * Thinking tier budgets by model family.
  * Claude and Gemini 2.5 Pro use numeric budgets.
@@ -137,9 +141,10 @@ function isThinkingCapableModel(model: string): boolean {
  * and corresponding thinking configuration.
  *
  * Quota routing:
- * - ALL models default to Antigravity quota
+ * - Default to Antigravity quota unless cli_first is enabled for Gemini models
  * - Fallback to Gemini CLI happens at account rotation level when Antigravity is exhausted
  * - "antigravity-" prefix marks explicit quota (no fallback allowed)
+ * - Claude and image models always use Antigravity
  *
  * Examples:
  * - "gemini-2.5-flash" → { quotaPreference: "antigravity" }
@@ -150,7 +155,7 @@ function isThinkingCapableModel(model: string): boolean {
  * @param requestedModel - The model name from the request
  * @returns Resolved model with thinking configuration
  */
-export function resolveModelWithTier(requestedModel: string): ResolvedModel {
+export function resolveModelWithTier(requestedModel: string, options: ModelResolverOptions = {}): ResolvedModel {
   const isAntigravity = QUOTA_PREFIX_REGEX.test(requestedModel);
   const modelWithoutQuota = requestedModel.replace(QUOTA_PREFIX_REGEX, "");
 
@@ -158,10 +163,10 @@ export function resolveModelWithTier(requestedModel: string): ResolvedModel {
   const baseName = tier ? modelWithoutQuota.replace(TIER_REGEX, "") : modelWithoutQuota;
 
   const isImageModel = IMAGE_GENERATION_MODELS.test(modelWithoutQuota);
+  const isClaudeModel = modelWithoutQuota.toLowerCase().includes("claude");
   
-  // All models now default to Antigravity quota
-  // Fallback to gemini-cli happens at the account rotation level when Antigravity is exhausted
-  const quotaPreference = "antigravity" as const;
+  const preferGeminiCli = options.cli_first === true && !isAntigravity && !isImageModel && !isClaudeModel;
+  const quotaPreference = preferGeminiCli ? "gemini-cli" as const : "antigravity" as const;
   const explicitQuota = isAntigravity || isImageModel;
 
   const isGemini3 = modelWithoutQuota.toLowerCase().startsWith("gemini-3");
