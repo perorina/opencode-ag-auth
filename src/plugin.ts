@@ -1131,6 +1131,10 @@ export const createAntigravityPlugin = (providerId: string) => async (
             checkAborted();
             
             const accountCount = accountManager.getAccountCount();
+            const cliFirst = getCliFirst(config);
+            const preferredHeaderStyle = getHeaderStyleFromUrl(urlString, family, cliFirst);
+            const explicitQuota = isExplicitQuotaFromUrl(urlString);
+            const allowQuotaFallback = config.quota_fallback && !explicitQuota && family === "gemini";
             
             if (accountCount === 0) {
               throw new Error("No Antigravity accounts available. Run `opencode auth login`.");
@@ -1141,15 +1145,34 @@ export const createAntigravityPlugin = (providerId: string) => async (
               config.quota_refresh_interval_minutes,
             );
 
-            const account = accountManager.getCurrentOrNextForFamily(
+            let account = accountManager.getCurrentOrNextForFamily(
               family, 
               model, 
               config.account_selection_strategy,
-              'antigravity',
+              preferredHeaderStyle,
               config.pid_offset_enabled,
               config.soft_quota_threshold_percent,
               softQuotaCacheTtlMs,
             );
+
+            if (!account && allowQuotaFallback) {
+              const alternateHeaderStyle: HeaderStyle =
+                preferredHeaderStyle === "antigravity" ? "gemini-cli" : "antigravity";
+              account = accountManager.getCurrentOrNextForFamily(
+                family,
+                model,
+                config.account_selection_strategy,
+                alternateHeaderStyle,
+                config.pid_offset_enabled,
+                config.soft_quota_threshold_percent,
+                softQuotaCacheTtlMs,
+              );
+              if (account) {
+                pushDebug(
+                  `selected-by-fallback idx=${account.index} preferred=${preferredHeaderStyle} alternate=${alternateHeaderStyle}`,
+                );
+              }
+            }
             
             if (!account) {
               if (accountManager.areAllAccountsOverSoftQuota(family, config.soft_quota_threshold_percent, softQuotaCacheTtlMs, model)) {
@@ -1182,14 +1205,13 @@ export const createAntigravityPlugin = (providerId: string) => async (
                 continue;
               }
 
-              const headerStyle = getHeaderStyleFromUrl(urlString, family);
-              const explicitQuota = isExplicitQuotaFromUrl(urlString);
+              const strictWait = explicitQuota || !allowQuotaFallback;
               // All accounts are rate-limited - wait and retry
               const waitMs = accountManager.getMinWaitTimeForFamily(
                 family,
                 model,
-                headerStyle,
-                explicitQuota,
+                preferredHeaderStyle,
+                strictWait,
               ) || 60_000;
               const waitSecValue = Math.max(1, Math.ceil(waitMs / 1000));
 
@@ -1434,11 +1456,10 @@ export const createAntigravityPlugin = (providerId: string) => async (
             let shouldSwitchAccount = false;
             
             // Determine header style from model suffix:
-            // - Gemini models default to Antigravity
-            // - Claude models always use Antigravity
-            let headerStyle = getHeaderStyleFromUrl(urlString, family);
-            const explicitQuota = isExplicitQuotaFromUrl(urlString);
-            const cliFirst = getCliFirst(config);
+            // - Models with antigravity- prefix -> use Antigravity quota
+            // - Gemini models without explicit prefix -> follow cli_first
+            // - Claude models -> always use Antigravity
+            let headerStyle = preferredHeaderStyle;
             pushDebug(`headerStyle=${headerStyle} explicit=${explicitQuota}`);
             if (account.fingerprint) {
               pushDebug(`fingerprint: quotaUser=${account.fingerprint.quotaUser} deviceId=${account.fingerprint.deviceId.slice(0, 8)}...`);
@@ -2802,16 +2823,20 @@ function getCliFirst(config: AntigravityConfig): boolean {
   return (config as AntigravityConfig & { cli_first?: boolean }).cli_first ?? false;
 }
 
-function getHeaderStyleFromUrl(urlString: string, family: ModelFamily): HeaderStyle {
+function getHeaderStyleFromUrl(
+  urlString: string,
+  family: ModelFamily,
+  cliFirst: boolean = false,
+): HeaderStyle {
   if (family === "claude") {
     return "antigravity";
   }
   const modelWithSuffix = extractModelFromUrlWithSuffix(urlString);
   if (!modelWithSuffix) {
-    return "antigravity";
+    return cliFirst ? "gemini-cli" : "antigravity";
   }
-  const { quotaPreference } = resolveModelWithTier(modelWithSuffix);
-  return quotaPreference === "gemini-cli" ? "antigravity" : (quotaPreference ?? "antigravity");
+  const { quotaPreference } = resolveModelWithTier(modelWithSuffix, { cli_first: cliFirst });
+  return quotaPreference ?? "antigravity";
 }
 
 function isExplicitQuotaFromUrl(urlString: string): boolean {
