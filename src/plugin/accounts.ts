@@ -466,7 +466,11 @@ export class AccountManager {
   getCurrentAccountForFamily(family: ModelFamily): ManagedAccount | null {
     const currentIndex = this.currentAccountIndexByFamily[family];
     if (currentIndex >= 0 && currentIndex < this.accounts.length) {
-      return this.accounts[currentIndex] ?? null;
+      const account = this.accounts[currentIndex] ?? null;
+      // Only return account if it's enabled - disabled accounts should not be selected
+      if (account && account.enabled !== false) {
+        return account;
+      }
     }
     return null;
   }
