@@ -177,7 +177,7 @@ export interface AccountStorage {
   activeIndex: number;
 }
 
-export type CooldownReason = "auth-failure" | "network-error" | "project-error";
+export type CooldownReason = "auth-failure" | "network-error" | "project-error" | "validation-required";
 
 export interface AccountMetadataV3 {
   email?: string;
@@ -193,6 +193,11 @@ export interface AccountMetadataV3 {
   cooldownReason?: CooldownReason;
   /** Per-account device fingerprint for rate limit mitigation */
   fingerprint?: import("./fingerprint").Fingerprint;
+  /** Set when Google asks the user to verify this account before requests can continue. */
+  verificationRequired?: boolean;
+  verificationRequiredAt?: number;
+  verificationRequiredReason?: string;
+  verificationUrl?: string;
   /** Cached soft quota data */
   cachedQuota?: Record<string, { remainingFraction?: number; resetTime?: string; modelCount: number }>;
   cachedQuotaUpdatedAt?: number;

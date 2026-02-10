@@ -163,6 +163,10 @@ export interface ManagedAccount {
   /** Cached quota data from last checkAccountsQuota() call */
   cachedQuota?: Partial<Record<QuotaGroup, QuotaGroupSummary>>;
   cachedQuotaUpdatedAt?: number;
+  verificationRequired?: boolean;
+  verificationRequiredAt?: number;
+  verificationRequiredReason?: string;
+  verificationUrl?: string;
 }
 
 function nowMs(): number {
@@ -376,6 +380,10 @@ export class AccountManager {
               : generateFingerprint(),
             cachedQuota: acc.cachedQuota as Partial<Record<QuotaGroup, QuotaGroupSummary>> | undefined,
             cachedQuotaUpdatedAt: acc.cachedQuotaUpdatedAt,
+            verificationRequired: acc.verificationRequired,
+            verificationRequiredAt: acc.verificationRequiredAt,
+            verificationRequiredReason: acc.verificationRequiredReason,
+            verificationUrl: acc.verificationUrl,
           };
         })
         .filter((a): a is ManagedAccount => a !== null);
@@ -816,6 +824,57 @@ export class AccountManager {
     return true;
   }
 
+  markAccountVerificationRequired(accountIndex: number, reason?: string, verifyUrl?: string): boolean {
+    const account = this.accounts[accountIndex];
+    if (!account) {
+      return false;
+    }
+
+    account.verificationRequired = true;
+    account.verificationRequiredAt = nowMs();
+    account.verificationRequiredReason = reason?.trim() || undefined;
+
+    const normalizedVerifyUrl = verifyUrl?.trim();
+    if (normalizedVerifyUrl) {
+      account.verificationUrl = normalizedVerifyUrl;
+    }
+
+    if (account.enabled !== false) {
+      this.setAccountEnabled(accountIndex, false);
+    } else {
+      this.requestSaveToDisk();
+    }
+
+    return true;
+  }
+
+  clearAccountVerificationRequired(accountIndex: number, enableAccount = false): boolean {
+    const account = this.accounts[accountIndex];
+    if (!account) {
+      return false;
+    }
+
+    const wasVerificationRequired = account.verificationRequired === true;
+    const hadMetadata = (
+      account.verificationRequiredAt !== undefined ||
+      account.verificationRequiredReason !== undefined ||
+      account.verificationUrl !== undefined
+    );
+
+    account.verificationRequired = false;
+    account.verificationRequiredAt = undefined;
+    account.verificationRequiredReason = undefined;
+    account.verificationUrl = undefined;
+
+    if (enableAccount && wasVerificationRequired && account.enabled === false) {
+      this.setAccountEnabled(accountIndex, true);
+    } else if (wasVerificationRequired || hadMetadata) {
+      this.requestSaveToDisk();
+    }
+
+    return true;
+  }
+
   removeAccountByIndex(accountIndex: number): boolean {
     if (accountIndex < 0 || accountIndex >= this.accounts.length) {
       return false;
@@ -953,6 +1012,10 @@ export class AccountManager {
         fingerprintHistory: a.fingerprintHistory?.length ? a.fingerprintHistory : undefined,
         cachedQuota: a.cachedQuota && Object.keys(a.cachedQuota).length > 0 ? a.cachedQuota : undefined,
         cachedQuotaUpdatedAt: a.cachedQuotaUpdatedAt,
+        verificationRequired: a.verificationRequired,
+        verificationRequiredAt: a.verificationRequiredAt,
+        verificationRequiredReason: a.verificationRequiredReason,
+        verificationUrl: a.verificationUrl,
       })),
       activeIndex: claudeIndex,
       activeIndexByFamily: {
