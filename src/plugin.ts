@@ -3239,21 +3239,47 @@ export const createAntigravityPlugin =
                           | "expired"
                           | "verification-required"
                           | "unknown" = "unknown";
+                        let rateLimitedFamilies: string[] | undefined;
+                        let rateLimitResetIn:
+                          | Record<string, number>
+                          | undefined;
 
                         if (acc.verificationRequired) {
                           status = "verification-required";
                         } else {
                           const rateLimits = acc.rateLimitResetTimes;
                           if (rateLimits) {
-                            const isRateLimited = Object.values(
+                            const limitedEntries = Object.entries(
                               rateLimits,
-                            ).some(
-                              (resetTime) =>
+                            ).filter(
+                              ([, resetTime]) =>
                                 typeof resetTime === "number" &&
                                 resetTime > now,
                             );
-                            if (isRateLimited) {
-                              status = "rate-limited";
+                            if (limitedEntries.length > 0) {
+                              // Build per-family reset times (earliest reset per family)
+                              const familyResets: Record<string, number> = {};
+                              for (const [key, resetTime] of limitedEntries) {
+                                const family =
+                                  key === "claude" ? "claude" : "gemini";
+                                const remainingMs = (resetTime as number) - now;
+                                if (
+                                  !familyResets[family] ||
+                                  remainingMs < familyResets[family]
+                                ) {
+                                  familyResets[family] = remainingMs;
+                                }
+                              }
+                              rateLimitedFamilies = Object.keys(familyResets);
+                              rateLimitResetIn = familyResets;
+
+                              // Only fully rate-limited if ALL families are exhausted
+                              const allFamiliesLimited =
+                                rateLimitedFamilies.includes("claude") &&
+                                rateLimitedFamilies.includes("gemini");
+                              status = allFamiliesLimited
+                                ? "rate-limited"
+                                : "active";
                             } else {
                               status = "active";
                             }
@@ -3275,6 +3301,8 @@ export const createAntigravityPlugin =
                           addedAt: acc.addedAt,
                           lastUsed: acc.lastUsed,
                           status,
+                          rateLimitedFamilies,
+                          rateLimitResetIn,
                           isCurrentAccount:
                             idx === (existingStorage.activeIndex ?? 0),
                           enabled: acc.enabled !== false,
