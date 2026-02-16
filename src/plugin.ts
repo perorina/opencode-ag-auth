@@ -3247,22 +3247,20 @@ export const createAntigravityPlugin =
                         if (acc.verificationRequired) {
                           status = "verification-required";
                         } else {
+                          // Build rate-limit state from rateLimitResetTimes (429-based)
+                          const familyResets: Record<string, number> = {};
                           const rateLimits = acc.rateLimitResetTimes;
                           if (rateLimits) {
-                            const limitedEntries = Object.entries(
+                            for (const [key, resetTime] of Object.entries(
                               rateLimits,
-                            ).filter(
-                              ([, resetTime]) =>
+                            )) {
+                              if (
                                 typeof resetTime === "number" &&
-                                resetTime > now,
-                            );
-                            if (limitedEntries.length > 0) {
-                              // Build per-family reset times (earliest reset per family)
-                              const familyResets: Record<string, number> = {};
-                              for (const [key, resetTime] of limitedEntries) {
+                                resetTime > now
+                              ) {
                                 const family =
                                   key === "claude" ? "claude" : "gemini";
-                                const remainingMs = (resetTime as number) - now;
+                                const remainingMs = resetTime - now;
                                 if (
                                   !familyResets[family] ||
                                   remainingMs < familyResets[family]
@@ -3270,19 +3268,71 @@ export const createAntigravityPlugin =
                                   familyResets[family] = remainingMs;
                                 }
                               }
-                              rateLimitedFamilies = Object.keys(familyResets);
-                              rateLimitResetIn = familyResets;
-
-                              // Only fully rate-limited if ALL families are exhausted
-                              const allFamiliesLimited =
-                                rateLimitedFamilies.includes("claude") &&
-                                rateLimitedFamilies.includes("gemini");
-                              status = allFamiliesLimited
-                                ? "rate-limited"
-                                : "active";
-                            } else {
-                              status = "active";
                             }
+                          }
+
+                          // Also derive from cachedQuota (quota-check-based)
+                          // This ensures badges are accurate even without 429 errors
+                          if (acc.cachedQuota) {
+                            const claudeQ = acc.cachedQuota.claude;
+                            if (
+                              claudeQ &&
+                              typeof claudeQ.remainingFraction === "number" &&
+                              claudeQ.remainingFraction <= 0 &&
+                              !familyResets["claude"]
+                            ) {
+                              const resetMs = claudeQ.resetTime
+                                ? Date.parse(claudeQ.resetTime) - now
+                                : 0;
+                              if (resetMs > 0) {
+                                familyResets["claude"] = resetMs;
+                              }
+                            }
+
+                            const geminiPro = acc.cachedQuota["gemini-pro"];
+                            const geminiFlash = acc.cachedQuota["gemini-flash"];
+                            const proExhausted =
+                              geminiPro &&
+                              typeof geminiPro.remainingFraction === "number" &&
+                              geminiPro.remainingFraction <= 0;
+                            const flashExhausted =
+                              geminiFlash &&
+                              typeof geminiFlash.remainingFraction ===
+                                "number" &&
+                              geminiFlash.remainingFraction <= 0;
+
+                            if (
+                              proExhausted &&
+                              flashExhausted &&
+                              !familyResets["gemini"]
+                            ) {
+                              const proReset = geminiPro?.resetTime
+                                ? Date.parse(geminiPro.resetTime) - now
+                                : 0;
+                              const flashReset = geminiFlash?.resetTime
+                                ? Date.parse(geminiFlash.resetTime) - now
+                                : 0;
+                              const earliest = Math.min(
+                                proReset > 0 ? proReset : Infinity,
+                                flashReset > 0 ? flashReset : Infinity,
+                              );
+                              if (earliest > 0 && earliest < Infinity) {
+                                familyResets["gemini"] = earliest;
+                              }
+                            }
+                          }
+
+                          if (Object.keys(familyResets).length > 0) {
+                            rateLimitedFamilies = Object.keys(familyResets);
+                            rateLimitResetIn = familyResets;
+
+                            // Only fully rate-limited if ALL families are exhausted
+                            const allFamiliesLimited =
+                              rateLimitedFamilies.includes("claude") &&
+                              rateLimitedFamilies.includes("gemini");
+                            status = allFamiliesLimited
+                              ? "rate-limited"
+                              : "active";
                           } else {
                             status = "active";
                           }
