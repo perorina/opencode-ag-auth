@@ -2406,7 +2406,7 @@ export const createAntigravityPlugin =
                     }
 
                     try {
-                      const prepared = prepareAntigravityRequest(
+                      let prepared = prepareAntigravityRequest(
                         input,
                         init,
                         accessToken,
@@ -2456,13 +2456,53 @@ export const createAntigravityPlugin =
                         );
                       }
 
-                      const response = await fetch(
+                      let response = await fetch(
                         prepared.request,
                         prepared.init,
                       );
                       pushDebug(
                         `status=${response.status} ${response.statusText}`,
                       );
+
+                      // Sonnet 4.6 Thinking fallback:
+                      // Some Antigravity backends no longer expose claude-sonnet-4-6-thinking.
+                      // If 404 is returned, retry immediately with non-thinking claude-sonnet-4-6.
+                      if (
+                        response.status === 404 &&
+                        headerStyle === "antigravity" &&
+                        prepared.effectiveModel?.toLowerCase() === "claude-sonnet-4-6-thinking"
+                      ) {
+                        const previousResolvedUrl = toUrlString(prepared.request);
+                        const fallbackInput = previousResolvedUrl.replace(
+                          /claude-sonnet-4-6-thinking/gi,
+                          "claude-sonnet-4-6",
+                        );
+
+                        if (fallbackInput !== previousResolvedUrl) {
+                          pushDebug(
+                            "sonnet-4-6 fallback: 404 on thinking model, retrying non-thinking model",
+                          );
+
+                          prepared = prepareAntigravityRequest(
+                            fallbackInput,
+                            init,
+                            accessToken,
+                            projectContext.effectiveProjectId,
+                            currentEndpoint,
+                            headerStyle,
+                            forceThinkingRecovery,
+                            {
+                              claudeToolHardening: config.claude_tool_hardening,
+                              fingerprint: account.fingerprint,
+                            },
+                          );
+
+                          response = await fetch(prepared.request, prepared.init);
+                          pushDebug(
+                            `status=${response.status} ${response.statusText} (sonnet fallback)`,
+                          );
+                        }
+                      }
 
                       // Handle 429 rate limit (or Service Overloaded) with improved logic
                       if (

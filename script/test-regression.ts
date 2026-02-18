@@ -18,6 +18,7 @@ interface MultiTurnTest {
 interface TurnConfig {
   prompt: string;
   model?: string;
+  variant?: "low" | "medium" | "high" | "max";
 }
 
 interface TestResult {
@@ -54,8 +55,21 @@ const ERROR_PATTERNS = [
 
 const GEMINI_FLASH = "google/antigravity-gemini-3-flash";
 const GEMINI_FLASH_CLI_QUOTA = "google/gemini-2.5-flash";
-const CLAUDE_SONNET = "google/antigravity-claude-sonnet-4-6-thinking-low";
-const CLAUDE_OPUS = "google/antigravity-claude-opus-4-5-thinking-low";
+const CLAUDE_SONNET = "google/antigravity-claude-sonnet-4-6-thinking";
+const CLAUDE_SONNET_VARIANT: TurnConfig["variant"] = "low";
+const CLAUDE_OPUS = "google/antigravity-claude-opus-4-5-thinking";
+const CLAUDE_OPUS_VARIANT: TurnConfig["variant"] = "low";
+
+function getDefaultVariantForModel(model: string): TurnConfig["variant"] | undefined {
+  const normalized = model.toLowerCase();
+  if (normalized.includes("claude-sonnet-4-6-thinking")) {
+    return CLAUDE_SONNET_VARIANT;
+  }
+  if (normalized.includes("claude-opus-4-5-thinking")) {
+    return CLAUDE_OPUS_VARIANT;
+  }
+  return undefined;
+}
 
 const SANITY_TESTS: MultiTurnTest[] = [
   {
@@ -63,7 +77,9 @@ const SANITY_TESTS: MultiTurnTest[] = [
     model: CLAUDE_SONNET,
     category: "thinking-order",
     suite: "sanity",
-    turns: ["Read package.json and tell me the package name"],
+    turns: [
+      { prompt: "Read package.json and tell me the package name", model: CLAUDE_SONNET, variant: CLAUDE_SONNET_VARIANT },
+    ],
     errorPatterns: ERROR_PATTERNS,
     timeout: 90000,
   },
@@ -72,7 +88,9 @@ const SANITY_TESTS: MultiTurnTest[] = [
     model: CLAUDE_SONNET,
     category: "thinking-order",
     suite: "sanity",
-    turns: ["Run: echo 'hello' and tell me the output"],
+    turns: [
+      { prompt: "Run: echo 'hello' and tell me the output", model: CLAUDE_SONNET, variant: CLAUDE_SONNET_VARIANT },
+    ],
     errorPatterns: ERROR_PATTERNS,
     timeout: 90000,
   },
@@ -81,7 +99,10 @@ const SANITY_TESTS: MultiTurnTest[] = [
     model: CLAUDE_SONNET,
     category: "tool-pairing",
     suite: "sanity",
-    turns: ["Run: echo 'first'", "Run: echo 'second'"],
+    turns: [
+      { prompt: "Run: echo 'first'", model: CLAUDE_SONNET, variant: CLAUDE_SONNET_VARIANT },
+      { prompt: "Run: echo 'second'", model: CLAUDE_SONNET, variant: CLAUDE_SONNET_VARIANT },
+    ],
     errorPatterns: ERROR_PATTERNS,
     timeout: 120000,
   },
@@ -90,7 +111,9 @@ const SANITY_TESTS: MultiTurnTest[] = [
     model: CLAUDE_OPUS,
     category: "thinking-order",
     suite: "sanity",
-    turns: ["What is 7 * 8? Use bash to verify: echo $((7*8))"],
+    turns: [
+      { prompt: "What is 7 * 8? Use bash to verify: echo $((7*8))", model: CLAUDE_OPUS, variant: CLAUDE_OPUS_VARIANT },
+    ],
     errorPatterns: ERROR_PATTERNS,
     timeout: 120000,
   },
@@ -100,9 +123,9 @@ const SANITY_TESTS: MultiTurnTest[] = [
     category: "thinking-order",
     suite: "sanity",
     turns: [
-      "Read package.json and tell me the version",
-      "Now read tsconfig.json and tell me the target",
-      "Compare the two files briefly",
+      { prompt: "Read package.json and tell me the version", model: CLAUDE_SONNET, variant: CLAUDE_SONNET_VARIANT },
+      { prompt: "Now read tsconfig.json and tell me the target", model: CLAUDE_SONNET, variant: CLAUDE_SONNET_VARIANT },
+      { prompt: "Compare the two files briefly", model: CLAUDE_SONNET, variant: CLAUDE_SONNET_VARIANT },
     ],
     errorPatterns: ERROR_PATTERNS,
     timeout: 120000,
@@ -114,7 +137,7 @@ const SANITY_TESTS: MultiTurnTest[] = [
     suite: "sanity",
     turns: [
       { prompt: "What is 2+2? Answer briefly.", model: GEMINI_FLASH },
-      { prompt: "What is 3+3? Answer briefly.", model: CLAUDE_SONNET },
+      { prompt: "What is 3+3? Answer briefly.", model: CLAUDE_SONNET, variant: CLAUDE_SONNET_VARIANT },
       { prompt: "What is 4+4? Answer briefly.", model: GEMINI_FLASH },
     ],
     errorPatterns: ERROR_PATTERNS,
@@ -284,16 +307,23 @@ async function runTurn(
   model: string,
   sessionId: string | null,
   sessionTitle: string,
-  timeout: number
+  timeout: number,
+  variant?: TurnConfig["variant"],
 ): Promise<{ output: string; stderr: string; code: number; sessionId: string | null }> {
   return new Promise((resolve) => {
     const args = sessionId
       ? ["run", prompt, "--session", sessionId, "--model", model]
       : ["run", prompt, "--model", model, "--title", sessionTitle];
 
-    const proc = spawn("opencode", args, {
+    if (variant) {
+      args.push("--variant", variant);
+    }
+
+    const command = process.platform === "win32" ? "opencode.cmd" : "opencode";
+    const proc = spawn(command, args, {
       stdio: ["ignore", "pipe", "pipe"],
       cwd: process.cwd(),
+      shell: process.platform === "win32",
     });
 
     let stdout = "";
@@ -345,10 +375,12 @@ async function runTurn(
 
 async function deleteSession(sessionId: string): Promise<void> {
   return new Promise((resolve) => {
-    const proc = spawn("opencode", ["session", "delete", sessionId, "--force"], {
+    const command = process.platform === "win32" ? "opencode.cmd" : "opencode";
+    const proc = spawn(command, ["session", "delete", sessionId, "--force"], {
       stdio: ["ignore", "pipe", "pipe"],
       timeout: 10000,
       cwd: process.cwd(),
+      shell: process.platform === "win32",
     });
 
     proc.on("close", () => resolve());
@@ -435,6 +467,10 @@ async function runMultiTurnTest(test: MultiTurnTest): Promise<TestResult> {
     const turn = test.turns[index]!;
     const prompt = typeof turn === "string" ? turn : turn.prompt;
     const model = typeof turn === "string" ? test.model : (turn.model ?? test.model);
+    const variant =
+      typeof turn === "string"
+        ? getDefaultVariantForModel(model)
+        : (turn.variant ?? getDefaultVariantForModel(model));
     const turnStart = Date.now();
 
     process.stdout.write(`\r  Progress: ${index + 1}/${test.turns.length} turns...`);
@@ -444,7 +480,8 @@ async function runMultiTurnTest(test: MultiTurnTest): Promise<TestResult> {
       model,
       sessionId ?? null,
       `regression-${test.name}`,
-      test.timeout
+      test.timeout,
+      variant,
     );
 
     for (const pattern of test.errorPatterns) {

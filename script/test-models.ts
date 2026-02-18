@@ -4,6 +4,7 @@ import { spawn } from "child_process";
 interface ModelTest {
   model: string;
   category: "gemini-cli" | "antigravity-gemini" | "antigravity-claude";
+  variant?: "low" | "medium" | "high" | "max";
 }
 
 const MODELS: ModelTest[] = [
@@ -20,15 +21,15 @@ const MODELS: ModelTest[] = [
 
   // Antigravity Claude
   { model: "google/antigravity-claude-sonnet-4-6", category: "antigravity-claude" },
-  { model: "google/antigravity-claude-sonnet-4-6-thinking-low", category: "antigravity-claude" },
-  { model: "google/antigravity-claude-sonnet-4-6-thinking-medium", category: "antigravity-claude" },
-  { model: "google/antigravity-claude-sonnet-4-6-thinking-high", category: "antigravity-claude" },
-  { model: "google/antigravity-claude-opus-4-5-thinking-low", category: "antigravity-claude" },
-  { model: "google/antigravity-claude-opus-4-5-thinking-medium", category: "antigravity-claude" },
-  { model: "google/antigravity-claude-opus-4-5-thinking-high", category: "antigravity-claude" },
-  { model: "google/antigravity-claude-opus-4-6-thinking-low", category: "antigravity-claude" },
-  { model: "google/antigravity-claude-opus-4-6-thinking-medium", category: "antigravity-claude" },
-  { model: "google/antigravity-claude-opus-4-6-thinking-high", category: "antigravity-claude" },
+  { model: "google/antigravity-claude-sonnet-4-6-thinking", category: "antigravity-claude", variant: "low" },
+  { model: "google/antigravity-claude-sonnet-4-6-thinking", category: "antigravity-claude", variant: "medium" },
+  { model: "google/antigravity-claude-sonnet-4-6-thinking", category: "antigravity-claude", variant: "high" },
+  { model: "google/antigravity-claude-opus-4-5-thinking", category: "antigravity-claude", variant: "low" },
+  { model: "google/antigravity-claude-opus-4-5-thinking", category: "antigravity-claude", variant: "medium" },
+  { model: "google/antigravity-claude-opus-4-5-thinking", category: "antigravity-claude", variant: "high" },
+  { model: "google/antigravity-claude-opus-4-6-thinking", category: "antigravity-claude", variant: "low" },
+  { model: "google/antigravity-claude-opus-4-6-thinking", category: "antigravity-claude", variant: "medium" },
+  { model: "google/antigravity-claude-opus-4-6-thinking", category: "antigravity-claude", variant: "high" },
 ];
 
 const TEST_PROMPT = "Reply with exactly one word: WORKING";
@@ -40,12 +41,19 @@ interface TestResult {
   duration: number;
 }
 
-async function testModel(model: string, timeoutMs: number): Promise<TestResult> {
+async function testModel(model: string, timeoutMs: number, variant?: ModelTest["variant"]): Promise<TestResult> {
   const start = Date.now();
 
   return new Promise((resolve) => {
-    const proc = spawn("opencode", ["run", TEST_PROMPT, "--model", model], {
+    const command = process.platform === "win32" ? "opencode.cmd" : "opencode";
+    const args = ["run", TEST_PROMPT, "--model", model];
+    if (variant) {
+      args.push("--variant", variant);
+    }
+
+    const proc = spawn(command, args, {
       stdio: ["ignore", "pipe", "pipe"],
+      shell: process.platform === "win32",
     });
 
     let stdout = "";
@@ -133,7 +141,8 @@ async function main(): Promise<void> {
 
   if (dryRun) {
     for (const t of tests) {
-      console.log(`  ${t.model.padEnd(50)} [${t.category}]`);
+      const withVariant = t.variant ? `${t.model} (variant=${t.variant})` : t.model;
+      console.log(`  ${withVariant.padEnd(68)} [${t.category}]`);
     }
     console.log(`\n${tests.length} models would be tested.\n`);
     return;
@@ -144,8 +153,9 @@ async function main(): Promise<void> {
   const failures: { model: string; error: string }[] = [];
 
   for (const t of tests) {
-    process.stdout.write(`Testing ${t.model.padEnd(50)} ... `);
-    const result = await testModel(t.model, timeout);
+    const displayName = t.variant ? `${t.model} [${t.variant}]` : t.model;
+    process.stdout.write(`Testing ${displayName.padEnd(68)} ... `);
+    const result = await testModel(t.model, timeout, t.variant);
 
     if (result.success) {
       console.log(`✅ (${(result.duration / 1000).toFixed(1)}s)`);
