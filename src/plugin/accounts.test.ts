@@ -1163,18 +1163,18 @@ describe("AccountManager", () => {
       const manager = new AccountManager(undefined, stored);
       const account = manager.getCurrentOrNextForFamily("gemini");
 
-      manager.markRateLimited(account!, 30000, "gemini", "antigravity", "gemini-3-pro-image");
+      manager.markRateLimited(account!, 30000, "gemini", "antigravity", "gemini-3.1-pro-image");
 
       expect(
         manager.getMinWaitTimeForFamily(
           "gemini",
-          "gemini-3-pro-image",
+          "gemini-3.1-pro-image",
           "antigravity",
           true,
         ),
       ).toBe(30000);
 
-      expect(manager.getMinWaitTimeForFamily("gemini", "gemini-3-pro-image")).toBe(0);
+      expect(manager.getMinWaitTimeForFamily("gemini", "gemini-3.1-pro-image")).toBe(0);
     });
 
     describe("parseRateLimitReason", () => {
@@ -1863,6 +1863,6 @@ describe("resolveQuotaGroup", () => {
   it("model takes precedence over family", () => {
     // Even if family says claude, model determines the quota group
     expect(resolveQuotaGroup("gemini", "gemini-2.5-flash")).toBe("gemini-flash");
-    expect(resolveQuotaGroup("gemini", "gemini-3-pro")).toBe("gemini-pro");
+    expect(resolveQuotaGroup("gemini", "gemini-3.1-pro")).toBe("gemini-pro");
   });
 });

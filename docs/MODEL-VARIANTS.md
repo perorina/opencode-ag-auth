@@ -59,12 +59,12 @@ Gemini 3 models use string-based thinking levels. Available levels differ by mod
 
 > **Note:** The API rejects invalid levels (e.g., `"minimal"` on Pro). Configure variants accordingly.
 
-### Gemini 3 Pro Example
+### Gemini 3.1 Pro Example
 
 ```json
 {
-  "antigravity-gemini-3-pro": {
-    "name": "Gemini 3 Pro (Antigravity)",
+  "antigravity-gemini-3.1-pro": {
+    "name": "Gemini 3.1 Pro (Antigravity)",
     "limit": { "context": 1048576, "output": 65535 },
     "modalities": { "input": ["text", "image", "pdf"], "output": ["text"] },
     "variants": {
@@ -157,9 +157,9 @@ Legacy model names still work:
 - `antigravity-claude-sonnet-4-6-thinking-low`
 - `antigravity-claude-sonnet-4-6-thinking-medium`
 - `antigravity-claude-sonnet-4-6-thinking-high`
-- `antigravity-gemini-3-pro-low`
-- `antigravity-gemini-3-pro-high`
-- `gemini-3-pro-low`
+- `antigravity-gemini-3.1-pro-low`
+- `antigravity-gemini-3.1-pro-high`
+- `gemini-3.1-pro-low`
 - `gemini-3-flash-medium`
 
 However, **we recommend using simplified model names with variants** for:

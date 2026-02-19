@@ -67,7 +67,7 @@ describe("updateOpencodeConfig", () => {
     expect(writtenConfig.provider.google.models["old-model"]).toBeUndefined();
     // New models should be present
     expect(
-      writtenConfig.provider.google.models["antigravity-gemini-3-pro"],
+      writtenConfig.provider.google.models["antigravity-gemini-3.1-pro"],
     ).toBeDefined();
     expect(
       writtenConfig.provider.google.models["antigravity-claude-sonnet-4-6"],
@@ -244,7 +244,7 @@ describe("updateOpencodeConfig", () => {
     expect(writtenConfig.plugin).toContain("opencode-ag-auth@latest");
     expect(writtenConfig.provider.google.region).toBe("us-central1");
     expect(
-      writtenConfig.provider.google.models["antigravity-gemini-3-pro"],
+      writtenConfig.provider.google.models["antigravity-gemini-3.1-pro"],
     ).toBeDefined();
   });
 

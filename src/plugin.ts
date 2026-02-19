@@ -3521,7 +3521,7 @@ export const createAntigravityPlugin =
                           const groupEntries = [
                             { name: "Claude", data: groups.claude },
                             {
-                              name: "Gemini 3 Pro",
+                              name: "Gemini 3.1 Pro",
                               data: groups["gemini-pro"],
                             },
                             {

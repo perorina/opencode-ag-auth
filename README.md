@@ -8,7 +8,7 @@
 
 **The Hardened, Safety-First Antigravity Plugin for OpenCode.**
 
-Enable OpenCode to authenticate against **Antigravity** (Google's IDE) with enterprise-grade **account protection** and **session stability**. Access models like `gemini-3-pro` and `claude-opus-4-6-thinking` while keeping your accounts safe from bans and your agents running without interruption.
+Enable OpenCode to authenticate against **Antigravity** (Google's IDE) with enterprise-grade **account protection** and **session stability**. Access models like `gemini-3.1-pro` and `claude-opus-4-6-thinking` while keeping your accounts safe from bans and your agents running without interruption.
 
 ## Why this Fork?
 
@@ -25,7 +25,7 @@ This is a specialized fork of `opencode-antigravity-auth` focused on **Safety** 
 
 ## Key Features
 
-- **All Antigravity Models**: Claude Opus 4.6, Sonnet 4.6, and Gemini 3 Pro/Flash via Google OAuth.
+- **All Antigravity Models**: Claude Opus 4.6, Sonnet 4.6, and Gemini 3.1 Pro/Flash via Google OAuth.
 - **Thinking Models**: Configurable thinking budgets for complex reasoning tasks.
 - **Multi-Account Rotation**: Add unlimited Google accounts; the plugin auto-rotates based on health and quota.
 - **Dual Quota Pools**: Intelligently routes between Antigravity and Gemini CLI quotas.
@@ -133,7 +133,7 @@ For a complete installation guide, including manual methods and advanced agent p
 
 | Model | Variants | Notes |
 |-------|----------|-------|
-| `antigravity-gemini-3-pro` | low, high | Gemini 3 Pro with thinking |
+| `antigravity-gemini-3.1-pro` | low, high | Gemini 3.1 Pro with thinking |
 | `antigravity-gemini-3-flash` | minimal, low, medium, high | Gemini 3 Flash with thinking |
 | `antigravity-claude-sonnet-4-6` | — | Claude Sonnet 4.6 |
 | `antigravity-claude-sonnet-4-6-thinking` | low, max | Claude Sonnet with extended thinking |
@@ -147,7 +147,7 @@ For a complete installation guide, including manual methods and advanced agent p
 | `gemini-2.5-flash` | Gemini 2.5 Flash |
 | `gemini-2.5-pro` | Gemini 2.5 Pro |
 | `gemini-3-flash-preview` | Gemini 3 Flash (preview) |
-| `gemini-3-pro-preview` | Gemini 3 Pro (preview) |
+| `gemini-3.1-pro-preview` | Gemini 3.1 Pro (preview) |
 
 > **Routing Behavior:**
 > - **Antigravity-first (default):** Gemini models use Antigravity quota across accounts.
@@ -175,8 +175,8 @@ Add this to your `~/.config/opencode/opencode.json`:
   "provider": {
     "google": {
       "models": {
-        "antigravity-gemini-3-pro": {
-          "name": "Gemini 3 Pro (Antigravity)",
+        "antigravity-gemini-3.1-pro": {
+          "name": "Gemini 3.1 Pro (Antigravity)",
           "limit": { "context": 1048576, "output": 65535 },
           "modalities": { "input": ["text", "image", "pdf"], "output": ["text"] },
           "variants": {
@@ -234,8 +234,8 @@ Add this to your `~/.config/opencode/opencode.json`:
           "limit": { "context": 1048576, "output": 65536 },
           "modalities": { "input": ["text", "image", "pdf"], "output": ["text"] }
         },
-        "gemini-3-pro-preview": {
-          "name": "Gemini 3 Pro Preview (Gemini CLI)",
+        "gemini-3.1-pro-preview": {
+          "name": "Gemini 3.1 Pro Preview (Gemini CLI)",
           "limit": { "context": 1048576, "output": 65535 },
           "modalities": { "input": ["text", "image", "pdf"], "output": ["text"] }
         }
@@ -433,7 +433,7 @@ If you encounter errors during a session:
 {
   "google_auth": false,
   "agents": {
-    "frontend-ui-ux-engineer": { "model": "google/gemini-3-pro" },
+    "frontend-ui-ux-engineer": { "model": "google/gemini-3.1-pro" },
     "document-writer": { "model": "google/gemini-3-flash" },
     "multimodal-looker": { "model": "google/gemini-3-flash" }
   }
@@ -572,7 +572,7 @@ Disable built-in auth and override agent models in `oh-my-opencode.json`:
 {
   "google_auth": false,
   "agents": {
-    "frontend-ui-ux-engineer": { "model": "google/antigravity-gemini-3-pro" },
+    "frontend-ui-ux-engineer": { "model": "google/antigravity-gemini-3.1-pro" },
     "document-writer": { "model": "google/antigravity-gemini-3-flash" },
     "multimodal-looker": { "model": "google/antigravity-gemini-3-flash" }
   }

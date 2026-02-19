@@ -4,9 +4,9 @@ The authentication menu fails to show granular rate limit status (e.g. `[active]
 
 ## Audit Findings
 Inspection of `antigravity-accounts.json` revealed:
-- **Disconnect:** Account 0 has `claude` quota exhausted in `cachedQuota` (future reset date), but `rateLimitResetTimes` keys are model-specific (e.g., `gemini-antigravity:gemini-3-pro-high`), causing the naive check `key === "claude"` to potentially miss or misinterpret data if not careful.
+- **Disconnect:** Account 0 has `claude` quota exhausted in `cachedQuota` (future reset date), but `rateLimitResetTimes` keys are model-specific (e.g., `gemini-antigravity:gemini-3.1-pro-high`), causing the naive check `key === "claude"` to potentially miss or misinterpret data if not careful.
 - **Key Structure:**
-    - `rateLimitResetTimes`: uses keys like `claude`, `gemini-antigravity:gemini-3-pro`, `gemini-cli`.
+    - `rateLimitResetTimes`: uses keys like `claude`, `gemini-antigravity:gemini-3.1-pro`, `gemini-cli`.
     - `cachedQuota`: uses keys `claude`, `gemini-pro`, `gemini-flash`.
 - **Status Logic:** The current logic (v1.5.5) does not read `cachedQuota` at all for status badges, leading to "Active" status despite 0% quota.
 

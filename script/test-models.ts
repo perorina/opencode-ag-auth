@@ -10,13 +10,13 @@ interface ModelTest {
 const MODELS: ModelTest[] = [
   // Gemini CLI (direct Google API)
   { model: "google/gemini-3-flash-preview", category: "gemini-cli" },
-  { model: "google/gemini-3-pro-preview", category: "gemini-cli" },
+  { model: "google/gemini-3.1-pro-preview", category: "gemini-cli" },
   { model: "google/gemini-2.5-pro", category: "gemini-cli" },
   { model: "google/gemini-2.5-flash", category: "gemini-cli" },
 
   // Antigravity Gemini
-  { model: "google/antigravity-gemini-3-pro-low", category: "antigravity-gemini" },
-  { model: "google/antigravity-gemini-3-pro-high", category: "antigravity-gemini" },
+  { model: "google/antigravity-gemini-3.1-pro-low", category: "antigravity-gemini" },
+  { model: "google/antigravity-gemini-3.1-pro-high", category: "antigravity-gemini" },
   { model: "google/antigravity-gemini-3-flash", category: "antigravity-gemini" },
 
   // Antigravity Claude

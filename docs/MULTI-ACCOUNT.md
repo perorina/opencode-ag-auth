@@ -52,7 +52,7 @@ opencode auth login
 
 This shows remaining quota percentages and reset times for each model family:
 - **Claude** - Claude Opus/Sonnet quota
-- **Gemini 3 Pro** - Gemini 3 Pro quota
+- **Gemini 3.1 Pro** - Gemini 3.1 Pro quota
 - **Gemini 3 Flash** - Gemini 3 Flash quota
 
 ### Standalone Quota Script

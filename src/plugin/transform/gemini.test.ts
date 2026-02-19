@@ -28,8 +28,8 @@ describe("transform/gemini", () => {
       expect(isGeminiModel("gemini-2.5-flash")).toBe(true);
     });
 
-    it("returns true for gemini-3-pro-high", () => {
-      expect(isGeminiModel("gemini-3-pro-high")).toBe(true);
+    it("returns true for gemini-3.1-pro-high", () => {
+      expect(isGeminiModel("gemini-3.1-pro-high")).toBe(true);
     });
 
     it("returns true for uppercase GEMINI-PRO", () => {
@@ -62,12 +62,12 @@ describe("transform/gemini", () => {
   });
 
   describe("isGemini3Model", () => {
-    it("returns true for gemini-3-pro", () => {
-      expect(isGemini3Model("gemini-3-pro")).toBe(true);
+    it("returns true for gemini-3.1-pro", () => {
+      expect(isGemini3Model("gemini-3.1-pro")).toBe(true);
     });
 
-    it("returns true for gemini-3-pro-high", () => {
-      expect(isGemini3Model("gemini-3-pro-high")).toBe(true);
+    it("returns true for gemini-3.1-pro-high", () => {
+      expect(isGemini3Model("gemini-3.1-pro-high")).toBe(true);
     });
 
     it("returns true for gemini-3-flash", () => {
@@ -112,8 +112,8 @@ describe("transform/gemini", () => {
       expect(isGemini25Model("GEMINI-2.5-PRO")).toBe(true);
     });
 
-    it("returns false for gemini-3-pro", () => {
-      expect(isGemini25Model("gemini-3-pro")).toBe(false);
+    it("returns false for gemini-3.1-pro", () => {
+      expect(isGemini25Model("gemini-3.1-pro")).toBe(false);
     });
 
     it("returns false for gemini-2.0-flash", () => {
@@ -372,7 +372,7 @@ describe("transform/gemini", () => {
     it("applies Gemini 3 thinking config with thinkingLevel", () => {
       const payload: RequestPayload = { contents: [] };
       applyGeminiTransforms(payload, {
-        model: "gemini-3-pro-high",
+        model: "gemini-3.1-pro-high",
         tierThinkingLevel: "high",
         normalizedThinking: { includeThoughts: true },
       });
@@ -421,7 +421,7 @@ describe("transform/gemini", () => {
     it("does not apply thinking config when normalizedThinking is undefined", () => {
       const payload: RequestPayload = { contents: [] };
       applyGeminiTransforms(payload, {
-        model: "gemini-3-pro",
+        model: "gemini-3.1-pro",
       });
       expect(payload.generationConfig).toBeUndefined();
     });
@@ -432,7 +432,7 @@ describe("transform/gemini", () => {
         generationConfig: { temperature: 0.7, maxOutputTokens: 1000 },
       };
       applyGeminiTransforms(payload, {
-        model: "gemini-3-pro-medium",
+        model: "gemini-3.1-pro-medium",
         tierThinkingLevel: "medium",
         normalizedThinking: { includeThoughts: true },
       });
@@ -460,7 +460,7 @@ describe("transform/gemini", () => {
     it("defaults includeThoughts to true when not specified", () => {
       const payload: RequestPayload = { contents: [] };
       applyGeminiTransforms(payload, {
-        model: "gemini-3-pro-low",
+        model: "gemini-3.1-pro-low",
         tierThinkingLevel: "low",
         normalizedThinking: {},
       });
@@ -471,7 +471,7 @@ describe("transform/gemini", () => {
     it("respects includeThoughts false", () => {
       const payload: RequestPayload = { contents: [] };
       applyGeminiTransforms(payload, {
-        model: "gemini-3-pro-high",
+        model: "gemini-3.1-pro-high",
         tierThinkingLevel: "high",
         normalizedThinking: { includeThoughts: false },
       });
@@ -495,7 +495,7 @@ describe("transform/gemini", () => {
       it("injects googleSearch tool when mode is 'auto'", () => {
         const payload: RequestPayload = { contents: [], tools: [] };
         applyGeminiTransforms(payload, {
-          model: "gemini-3-pro",
+          model: "gemini-3.1-pro",
           googleSearch: { mode: "auto" },
         });
         const tools = payload.tools as unknown[];
@@ -520,7 +520,7 @@ describe("transform/gemini", () => {
       it("works without threshold specified", () => {
         const payload: RequestPayload = { contents: [] };
         applyGeminiTransforms(payload, {
-          model: "gemini-3-pro",
+          model: "gemini-3.1-pro",
           googleSearch: { mode: "auto" },
         });
         const tools = payload.tools as unknown[];
@@ -531,7 +531,7 @@ describe("transform/gemini", () => {
       it("does not inject search tool when mode is 'off'", () => {
         const payload: RequestPayload = { contents: [], tools: [] };
         applyGeminiTransforms(payload, {
-          model: "gemini-3-pro",
+          model: "gemini-3.1-pro",
           googleSearch: { mode: "off" },
         });
         const tools = payload.tools as unknown[];
@@ -541,7 +541,7 @@ describe("transform/gemini", () => {
       it("does not inject search tool when googleSearch is undefined", () => {
         const payload: RequestPayload = { contents: [], tools: [] };
         applyGeminiTransforms(payload, {
-          model: "gemini-3-pro",
+          model: "gemini-3.1-pro",
         });
         const tools = payload.tools as unknown[];
         expect(tools).toHaveLength(0);
@@ -555,7 +555,7 @@ describe("transform/gemini", () => {
           ],
         };
         applyGeminiTransforms(payload, {
-          model: "gemini-3-pro",
+          model: "gemini-3.1-pro",
           googleSearch: { mode: "auto" },
         });
         const tools = payload.tools as unknown[];
@@ -567,7 +567,7 @@ describe("transform/gemini", () => {
       it("search tool is not normalized (skipped by normalizeGeminiTools)", () => {
         const payload: RequestPayload = { contents: [] };
         applyGeminiTransforms(payload, {
-          model: "gemini-3-pro",
+          model: "gemini-3.1-pro",
           googleSearch: { mode: "auto" },
         });
         const tools = payload.tools as unknown[];
@@ -580,12 +580,12 @@ describe("transform/gemini", () => {
   });
 
   describe("isImageGenerationModel", () => {
-    it("returns true for gemini-3-pro-image", () => {
-      expect(isImageGenerationModel("gemini-3-pro-image")).toBe(true);
+    it("returns true for gemini-3.1-pro-image", () => {
+      expect(isImageGenerationModel("gemini-3.1-pro-image")).toBe(true);
     });
 
-    it("returns true for gemini-3-pro-image-preview", () => {
-      expect(isImageGenerationModel("gemini-3-pro-image-preview")).toBe(true);
+    it("returns true for gemini-3.1-pro-image-preview", () => {
+      expect(isImageGenerationModel("gemini-3.1-pro-image-preview")).toBe(true);
     });
 
     it("returns true for gemini-2.5-flash-image", () => {
@@ -600,8 +600,8 @@ describe("transform/gemini", () => {
       expect(isImageGenerationModel("GEMINI-3-PRO-IMAGE")).toBe(true);
     });
 
-    it("returns false for gemini-3-pro", () => {
-      expect(isImageGenerationModel("gemini-3-pro")).toBe(false);
+    it("returns false for gemini-3.1-pro", () => {
+      expect(isImageGenerationModel("gemini-3.1-pro")).toBe(false);
     });
 
     it("returns false for gemini-2.5-flash", () => {
@@ -1437,7 +1437,7 @@ describe("transform/gemini", () => {
         ],
       };
       
-      applyGeminiTransforms(payload, { model: "gemini-3-pro" });
+      applyGeminiTransforms(payload, { model: "gemini-3.1-pro" });
       
       const tools = payload.tools as Array<Record<string, unknown>>;
       expect(tools).toHaveLength(1);
@@ -1463,7 +1463,7 @@ describe("transform/gemini", () => {
       };
 
       applyGeminiTransforms(payload, {
-        model: "gemini-3-pro",
+        model: "gemini-3.1-pro",
         googleSearch: { mode: "auto" },
       });
       

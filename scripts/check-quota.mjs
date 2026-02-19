@@ -2,8 +2,8 @@ import { readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 
-const CLIENT_ID = "1071006060591-tmhssin2h21lcre235vtolojh4g403ep.apps.googleusercontent.com";
-const CLIENT_SECRET = "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";
+const CLIENT_ID = process.env.GOOGLE_CLIENT_ID || "";
+const CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || "";
 const CLOUD_CODE_BASE = "https://cloudcode-pa.googleapis.com";
 const USER_AGENT = "antigravity/windows/amd64";
 const FALLBACK_PROJECT_ID = "bamboo-precept-lgxtn";
@@ -204,7 +204,7 @@ async function run() {
       }
 
       printGroup("Claude", groups["claude"]);
-      printGroup("Gemini 3 Pro", groups["gemini-pro"]);
+      printGroup("Gemini 3.1 Pro", groups["gemini-pro"]);
       printGroup("Gemini 3 Flash", groups["gemini-flash"]);
     } catch (error) {
       console.log(`   error: ${error instanceof Error ? error.message : String(error)}`);

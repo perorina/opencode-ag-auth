@@ -5,7 +5,7 @@
 # Models tested:
 # 1. google/gemini-2.5-pro
 # 2. google/gemini-2.5-flash
-# 3. google/gemini-3-pro-preview
+# 3. google/gemini-3.1-pro-preview
 # 4. google/gemini-3-flash-preview
 
 set -euo pipefail
@@ -94,8 +94,8 @@ echo "Test 3: google/gemini-3-flash-preview"
 test_model "google/gemini-3-flash-preview" "gemini-3-flash-preview" || true
 echo ""
 
-echo "Test 4: google/gemini-3-pro-preview"
-test_model "google/gemini-3-pro-preview" "gemini-3-pro-preview" || true
+echo "Test 4: google/gemini-3.1-pro-preview"
+test_model "google/gemini-3.1-pro-preview" "gemini-3.1-pro-preview" || true
 echo ""
 
 # Test 5: Cross-model session (gemini-cli → antigravity)
@@ -128,8 +128,8 @@ echo ""
 
 # Test 6: Reverse cross-model (antigravity → gemini-cli)
 echo "Test 6: Cross-model session (antigravity → gemini-cli)"
-log_info "Step 1: Start with antigravity-gemini-3-pro-low..."
-timeout 60 opencode run -m google/antigravity-gemini-3-pro-low \
+log_info "Step 1: Start with antigravity-gemini-3.1-pro-low..."
+timeout 60 opencode run -m google/antigravity-gemini-3.1-pro-low \
   "Say: ANTIGRAVITY_START" \
   2>&1 > /tmp/gemini-cli-e2e-reverse-s1.log || true
 
