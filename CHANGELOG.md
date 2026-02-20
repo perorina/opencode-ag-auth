@@ -1,5 +1,23 @@
 # Changelog
 
+## [1.5.10] - 2026-02-20
+
+### Added
+
+- **Gemini 3.1 Pro endpoint integration** - Merged PR #2 (`aikazu/feat/update-gemini-3-1-pro`) to align backend routing and model handling updates for Gemini 3.1 Pro flows.
+
+### Fixed
+
+- **Typecheck stability** - Fixed `src/plugin/accounts-quota.test.ts` imports and storage typing to remove invalid symbol imports and pass strict TypeScript `verbatimModuleSyntax` checks.
+
+### Verified
+
+- **Gemini E2E model suite** - Confirmed passing runs for Gemini categories with isolated repo copies:
+  - `gemini-cli`: 4/4 passed (`google/gemini-3-flash-preview`, `google/gemini-3.1-pro-preview`, `google/gemini-2.5-pro`, `google/gemini-2.5-flash`)
+  - `antigravity-gemini`: 3/3 passed (`google/antigravity-gemini-3.1-pro-low`, `google/antigravity-gemini-3.1-pro-high`, `google/antigravity-gemini-3-flash`)
+
+---
+
 ## [1.5.8] - 2026-02-19
 
 ### Fixed
