@@ -1008,8 +1008,11 @@ export function prepareAntigravityRequest(
 
               requestPayload.generationConfig = generationConfig;
             }
-          } else if (rawGenerationConfig?.thinkingConfig) {
+          } else if (rawGenerationConfig) {
             delete rawGenerationConfig.thinkingConfig;
+            delete rawGenerationConfig.thinking_config;
+            delete rawGenerationConfig.thinkingBudget;
+            delete rawGenerationConfig.thinking_budget;
             requestPayload.generationConfig = rawGenerationConfig;
           }
         } // End of else block for non-image models
