@@ -187,13 +187,39 @@ async function triggerAsyncQuotaRefreshForAccount(
   const accountKey = account.email ?? `idx-${accountIndex}`;
   if (quotaRefreshInProgressByEmail.has(accountKey)) return;
 
-  const intervalMs = intervalMinutes * 60 * 1000;
+  // Dynamically shorten interval if close to soft quota threshold
+  // to avoid blowing past the threshold during high usage.
+  let activeIntervalMinutes = intervalMinutes;
+
+  if (account.cachedQuota) {
+    let minRemaining = 1;
+    for (const group of Object.values(account.cachedQuota)) {
+      if (group && group.remainingFraction != null) {
+        minRemaining = Math.min(minRemaining, group.remainingFraction);
+      }
+    }
+    
+    // Scale interval based on how close to 0 we are.
+    // At <= 0.20 (80%+ used), check every 1 minute
+    // At <= 0.35 (65%+ used), check every 3 minutes
+    // At <= 0.50 (50%+ used), check every 5 minutes
+    if (minRemaining <= 0.20) {
+      activeIntervalMinutes = Math.min(1, intervalMinutes);
+    } else if (minRemaining <= 0.35) {
+      activeIntervalMinutes = Math.min(3, intervalMinutes);
+    } else if (minRemaining <= 0.50) {
+      activeIntervalMinutes = Math.min(5, intervalMinutes);
+    }
+  }
+
+  const intervalMs = activeIntervalMinutes * 60 * 1000;
   const age =
     account.cachedQuotaUpdatedAt != null
       ? Date.now() - account.cachedQuotaUpdatedAt
       : Infinity;
 
   if (age < intervalMs) return;
+
 
   quotaRefreshInProgressByEmail.add(accountKey);
 

@@ -7,7 +7,7 @@ describe("Config Loader Environment Overrides", () => {
 
   beforeEach(() => {
     vi.resetModules();
-    process.env = { ...originalEnv };
+    process.env = { ...originalEnv, OPENCODE_CONFIG_DIR: "/tmp/nonexistent_config_dir" };
   });
 
   afterEach(() => {
@@ -42,3 +42,4 @@ describe("Config Loader Environment Overrides", () => {
     expect(config.soft_quota_threshold_percent).toBe(30);
   });
 });
+
